@@ -1,36 +1,28 @@
-FROM 353750902984.dkr.ecr.us-east-1.amazonaws.com/thirdparty-chainguard-python310:latest-fips-dev
+FROM python:3.10-slim
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG CUDA_MAJOR_VERSION=12
-ARG CUDA_MINOR_VERSION=6
 
+# Requires nvidia-docker runtime (or equivalent) to provide CUDA inside the container.
+# See: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/docker-specialized.html
 ENV NVIDIA_DRIVER_CAPABILITIES="compute,utility"
 ENV NVIDIA_VISIBLE_DEVICES="all"
 
 USER root
 
-RUN apk update \
-    && apk upgrade \
-    && apk add wget \
-    && wget -O /etc/apk/keys/chainguard-extras.rsa.pub https://packages.cgr.dev/extras/chainguard-extras.rsa.pub \
-    && echo "https://packages.cgr.dev/extras" | tee -a /etc/apk/repositories \
-    && apk update \
-    && apk add --no-cache \
-    nvidia-cudnn-8 \
-    nvidia-cudnn-8-cuda-${CUDA_MAJOR_VERSION} \
-    nvidia-cudnn-8-cuda-${CUDA_MAJOR_VERSION}-dev \
-    nvidia-cuda-cudart-${CUDA_MAJOR_VERSION}.${CUDA_MINOR_VERSION} \
-    nvidia-cuda-cudart-${CUDA_MAJOR_VERSION}.${CUDA_MINOR_VERSION}-dev \
-    nvidia-cuda-nvcc-${CUDA_MAJOR_VERSION}.${CUDA_MINOR_VERSION} \
-    nvidia-libcublas-${CUDA_MAJOR_VERSION}.${CUDA_MINOR_VERSION} \
-    cuda-toolkit-${CUDA_MAJOR_VERSION}.${CUDA_MINOR_VERSION}-dev \
-    make \
-    curl \
-    git
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        git \
+        make \
+        wget \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -u 1000 nonroot
 
 WORKDIR /workspace
 
-ENV CUDA_HOME=/usr/local/cuda-${CUDA_MAJOR_VERSION}.${CUDA_MINOR_VERSION}
+ENV CUDA_HOME=/usr/local/cuda
 ENV PATH=$CUDA_HOME/bin:$PATH
 ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64
 
@@ -38,14 +30,17 @@ RUN python -m venv /workspace/venv
 
 # Install uv and python dependencies
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-RUN /root/.local/bin/uv sync --frozen --no-cache --no-dev
+# Ensure we run from the project root where pyproject.toml exists (copied later in this Dockerfile)
+# We copy pyproject.toml earlier to make `uv sync` work.
+COPY --chown=nonroot:nonroot ./pyproject.toml /workspace/pyproject.toml
+COPY --chown=nonroot:nonroot ./uv.lock /workspace/uv.lock
+RUN cd /workspace && /root/.local/bin/uv sync --frozen --no-cache --no-dev
 
 # Add the venv to the PATH
 ENV PATH=/workspace/.venv/bin:$PATH
 
 # We need to create a mount point for the user to mount their volume
 # All persistent data lives in /mount
-RUN mkdir -p /mount 
 RUN mkdir -p /mount && chown -R nonroot:nonroot /mount
 ENV H2O_LLM_STUDIO_WORKDIR=/mount
 
@@ -60,7 +55,6 @@ COPY --chown=nonroot:nonroot ./prompts /workspace/prompts
 COPY --chown=nonroot:nonroot ./model_cards /workspace/model_cards
 COPY --chown=nonroot:nonroot ./LICENSE /workspace/LICENSE
 COPY --chown=nonroot:nonroot ./entrypoint.sh /workspace/entrypoint.sh
-COPY --chown=nonroot:nonroot ./pyproject.toml /workspace/pyproject.toml
 
 ENV HF_HOME=/mount/huggingface
 ENV TRITON_CACHE_DIR=/mount/.triton/cache

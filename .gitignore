@@ -155,3 +155,6 @@ h2o_wave.state
 
 # playwright
 test-results/
+# Local Pi runtime state
+.atl/
+.pi/
