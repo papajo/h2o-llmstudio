@@ -5,7 +5,12 @@ set -e
 # that may not exist in /etc/passwd (e.g. when running with --user <uid>).
 export USER="${USER:-$(id -un 2>/dev/null)}"
 
-nvidia-smi
+# nvidia-smi is optional — only run if available (e.g. GPU-backed runners)
+if command -v nvidia-smi &>/dev/null; then
+  nvidia-smi
+else
+  echo "nvidia-smi not found — running without GPU diagnostics"
+fi
 
 echo "Starting H2O LLM Studio..."
 
