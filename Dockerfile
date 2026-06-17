@@ -1,16 +1,15 @@
 FROM python:3.10-slim
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG CUDA_MAJOR_VERSION=12
-ARG CUDA_MINOR_VERSION=6
 
+# Requires nvidia-docker runtime (or equivalent) to provide CUDA inside the container.
+# See: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/docker-specialized.html
 ENV NVIDIA_DRIVER_CAPABILITIES="compute,utility"
 ENV NVIDIA_VISIBLE_DEVICES="all"
 
 USER root
 
 RUN apt-get update \
-    && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
