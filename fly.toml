@@ -7,6 +7,7 @@ app = 'h2o-llmstudio'
 primary_region = 'iad'
 
 [build]
+  args = { GPU_SUPPORT = "false" }
 
 [http_service]
   internal_port = 8080
