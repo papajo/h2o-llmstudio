@@ -38,9 +38,7 @@ RUN python -m venv /workspace/venv
 
 # Install uv and python dependencies
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-RUN --mount=type=bind,src=pyproject.toml,target=pyproject.toml \
-    --mount=type=bind,src=uv.lock,target=uv.lock \
-    /root/.local/bin/uv sync --frozen --no-cache --no-dev
+RUN /root/.local/bin/uv sync --frozen --no-cache --no-dev
 
 # Add the venv to the PATH
 ENV PATH=/workspace/.venv/bin:$PATH
