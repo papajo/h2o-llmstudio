@@ -12,6 +12,8 @@ else
   echo "nvidia-smi not found — running without GPU diagnostics"
 fi
 
-echo "Starting H2O LLM Studio..."
+echo "Starting H2O LLM Studio on port ${PORT:-10101}..."
 
-wave run --no-reload llm_studio.app
+# H2O_WAVE_ADDRESS is already set in the Dockerfile to bind on 0.0.0.0.
+# Allow shell override: a caller can export H2O_WAVE_ADDRESS before exec.
+exec wave run --no-reload llm_studio.app

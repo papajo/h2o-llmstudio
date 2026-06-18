@@ -80,15 +80,24 @@ ENV HF_HUB_DISABLE_TELEMETRY=1
 ENV DO_NOT_TRACK=1
 
 # Set the environment variables for the wave server
+# H2O_WAVE_ADDRESS: bind address for the wave server.
+# Render (and other PaaS) assign a dynamic PORT — default to 10101.
+# 0.0.0.0 ensures the reverse proxy can reach the server.
+ENV PORT=10101
+ENV H2O_WAVE_ADDRESS=http://0.0.0.0:${PORT}
 ENV H2O_WAVE_APP_ADDRESS=http://127.0.0.1:8756
 ENV H2O_WAVE_MAX_REQUEST_SIZE=25MB
 ENV H2O_WAVE_NO_LOG=true
 ENV H2O_WAVE_PRIVATE_DIR="/download/@/mount/output/download"
+# WebSocket fallback: when the reverse proxy does not forward WS upgrade
+# requests, Wave falls back to HTTP long-polling via the public URL.
+# Render services get an EXTERNAL_URL; other environments can override.
+ENV H2O_WAVE_PUBLIC_URL="${EXTERNAL_URL:-http://localhost:${PORT}}"
 
 # Make the entrypoint.sh script executable
 RUN chmod 755 /workspace/entrypoint.sh
 
-EXPOSE 10101
+EXPOSE ${PORT}
 
 USER nonroot
 

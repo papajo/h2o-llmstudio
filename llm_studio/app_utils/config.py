@@ -40,7 +40,7 @@ try:
 except OSError:
     host = "localhost"
 
-port = "10101"
+port = os.getenv("PORT", "10101")
 url = f"http://{host}:{port}/"
 
 
