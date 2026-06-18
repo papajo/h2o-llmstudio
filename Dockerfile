@@ -46,7 +46,9 @@ RUN cd /workspace && /root/.local/bin/uv sync --frozen --no-cache --no-dev
 # For CPU-only builds, override torch with CPU wheels from PyTorch index
 RUN if [ "$GPU_SUPPORT" = "false" ]; then \
         echo 'Installing CPU-only PyTorch...' && \
-        cd /workspace && /root/.local/bin/uv pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cpu; \
+        cd /workspace && \
+        /root/.local/bin/uv pip uninstall nvidia-cublas-cu12 nvidia-cuda-cupti-cu12 nvidia-cuda-nvrtc-cu12 nvidia-cuda-runtime-cu12 nvidia-cudnn-cu12 nvidia-cufft-cu12 nvidia-cufile-cu12 nvidia-curand-cu12 nvidia-cusolver-cu12 nvidia-cusparse-cu12 nvidia-cusparselt-cu12 nvidia-nccl-cu12 nvidia-nvjitlink-cu12 nvidia-nvtx-cu12 && \
+        /root/.local/bin/uv pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cpu; \
     else \
         echo 'Using CUDA PyTorch (GPU support enabled)'; \
     fi
