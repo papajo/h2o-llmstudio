@@ -10,9 +10,12 @@ RUN apt-get update \
         ca-certificates \
         curl \
         git \
+        locales \
         make \
         wget \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
+    && locale-gen
 
 RUN useradd -m -u 1000 nonroot
 
@@ -21,6 +24,10 @@ WORKDIR /workspace
 # CUDA env vars — always set via ENV so they are available in the running
 # container regardless of shell type.  On CPU builds the paths simply
 # do not exist on disk and are harmless.
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV PYTHONIOENCODING=utf-8
+
 ENV CUDA_HOME=/usr/local/cuda
 ENV PATH=${CUDA_HOME}/bin:${PATH}
 ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH:-}
